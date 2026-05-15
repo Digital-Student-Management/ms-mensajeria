@@ -1,0 +1,4 @@
+# Ejemplo de variables de entorno necesarias para correr este microservicio
+DB_URL=jdbc:mysql://localhost:3306/nombre_bd
+DB_USER=usuario_local
+DB_PASSWORD=contraseña_local
