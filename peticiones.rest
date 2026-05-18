@@ -1,0 +1,34 @@
+### ============================================================
+###  📨 ms-mensajeria — Panel de Pruebas de Endpoints
+###  Puerto Asignado: 8083
+###  Requisito: Extensión "REST Client" en VS Code
+### ============================================================
+
+### 1. Enviar un nuevo mensaje
+POST http://localhost:8083/api/mensajes
+Content-Type: application/json
+
+{
+  "cuerpoMensaje": "Estimado apoderado, le recuerdo la reunión de mañana.",
+  "idRemitente": 2,
+  "idDestinatario": 3,
+  "hiloConversacion": "Reunión General"
+}
+
+### 2. Listar todos los mensajes
+GET http://localhost:8083/api/mensajes
+
+### 3. Buscar mensaje por ID
+GET http://localhost:8083/api/mensajes/1
+
+### 4. Actualizar estado del mensaje (Ej. marcar como leído)
+PUT http://localhost:8083/api/mensajes/1
+Content-Type: application/json
+
+{
+  "cuerpoMensaje": "Estimado apoderado, le recuerdo la reunión de mañana.",
+  "estado": "LEIDO"
+}
+
+### 5. Eliminar un mensaje
+DELETE http://localhost:8083/api/mensajes/1

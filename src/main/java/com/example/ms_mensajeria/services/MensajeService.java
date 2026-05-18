@@ -34,6 +34,8 @@ public class MensajeService {
         
         // 1. Comunicación entre Microservicios: Validar destinatario
         // Se utiliza la ruta definida en el MS-Usuarios de tus compañeros
+
+        //recordar quitar comentario cuando se tenga el MS-Usuario levantado para evitar errores de conexión al enviar mensajes
         /*String urlValidacion = "http://localhost:8080/api/usuarios/" + request.getIdDestinatario();
         
         try {
