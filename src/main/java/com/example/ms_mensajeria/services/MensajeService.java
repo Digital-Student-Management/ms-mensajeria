@@ -1,5 +1,4 @@
 package com.example.ms_mensajeria.services;
-
 import com.example.ms_mensajeria.dtos.MensajeRequestDTO;
 import com.example.ms_mensajeria.dtos.MensajeResponseDTO;
 import com.example.ms_mensajeria.dtos.MensajeUpdateDTO;
@@ -7,9 +6,7 @@ import com.example.ms_mensajeria.models.Mensaje;
 import com.example.ms_mensajeria.repositories.MensajeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,31 +22,16 @@ public class MensajeService {
     private final MensajeRepository mensajeRepository;
     private final FileStorageService fileStorageService;
     private final RestTemplate restTemplate;
+    
+    // Ruta base al microservicio de usuarios
+    private final String MS_USUARIOS_URL = "http://localhost:8080/api/usuarios/";
 
-    /**
-     * Envía un mensaje validando primero la existencia del destinatario 
-     * en el Microservicio de Usuarios (Puerto 8080).
-     */
+    //validar que el id del remitente y destinatario existan en el microservicio de usuarios...
     public MensajeResponseDTO enviarMensaje(MensajeRequestDTO request) {
         
-        // 1. Comunicación entre Microservicios: Validar destinatario
-        // Se utiliza la ruta definida en el MS-Usuarios de tus compañeros
-
-        //recordar quitar comentario cuando se tenga el MS-Usuario levantado para evitar errores de conexión al enviar mensajes
-        /*String urlValidacion = "http://localhost:8080/api/usuarios/" + request.getIdDestinatario();
-        
-        try {
-            // Intentamos obtener el usuario para verificar que existe antes de enviar
-            restTemplate.getForEntity(urlValidacion, Object.class);
-            
-        } catch (HttpClientErrorException.NotFound e) {
-            // Manejo del error 404 proveniente del microservicio externo
-            throw new RuntimeException("Error: El destinatario (ID: " + request.getIdDestinatario() + ") no existe en el sistema escolar.");
-            
-        } catch (Exception e) {
-            // Manejo de errores de conexión o caídas del servicio externo
-            throw new RuntimeException("No se pudo conectar con el Microservicio de Usuarios: " + e.getMessage());
-        }*/
+        // 1. Validación de Integridad Cruzada (Remitente y Destinatario)
+        validarUsuarioExistente(request.getIdRemitente(), "Remitente");
+        validarUsuarioExistente(request.getIdDestinatario(), "Destinatario");
 
         // 2. Procesamiento del archivo adjunto (si existe)
         String rutaArchivo = null;
@@ -74,7 +56,7 @@ public class MensajeService {
     }
 
     /**
-     * Obtiene la bandeja de entrada de un usuario (Estudiante, Apoderado o Docente).
+     * Obtiene la bandeja de entrada de un usuario.
      */
     public List<MensajeResponseDTO> obtenerBandeja(Long idDestinatario) {
         List<Mensaje> mensajes = mensajeRepository.findByIdDestinatarioOrderByFechaHoraEnvioDesc(idDestinatario);
@@ -115,8 +97,25 @@ public class MensajeService {
         mensajeRepository.deleteById(idMensaje);
     }
 
+    // ============================================================
+    // MÉTODOS AUXILIARES DE VALIDACIÓN Y MAPEO
+    // ============================================================
+
     /**
-     * Método auxiliar (Mapper) para transformar la Entidad de BD a un DTO de respuesta.
+     * Verifica sincrónicamente que un ID exista en el MS-Usuarios.
+     */
+    private void validarUsuarioExistente(Long id, String rolParticipante) {
+        try {
+            restTemplate.getForObject(MS_USUARIOS_URL + id, java.util.Map.class);
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+            throw new RuntimeException("Error de Integridad: El " + rolParticipante + " con ID " + id + " no existe en el sistema escolar.");
+        } catch (Exception e) {
+            throw new RuntimeException("Fallo en la comunicación con MS-Usuarios al validar el " + rolParticipante + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Transforma la Entidad de BD a un DTO de respuesta.
      */
     private MensajeResponseDTO mapearAResponse(Mensaje mensaje) {
         return MensajeResponseDTO.builder()
@@ -130,3 +129,5 @@ public class MensajeService {
                 .build();
     }
 }
+
+
